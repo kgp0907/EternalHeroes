@@ -1,0 +1,52 @@
+public class UserDataManager : MonoBehaviour
+{
+    private static UserDataManager instance;
+    public static UserDataManager Instance
+    {
+        get => instance;
+    }
+
+    //데이터들 아래에
+    public UserAccountData UserAccount;
+    public UserUnitData UserUnit;
+    public UserStageData UserStage;
+    public UserCurrencyData UserCurrency;
+    public UserRewardData UserReward;
+    public UserGachaData UserGacha;
+    public UserItemData UserItem;
+    public UserQuestData UserQuest;
+    public UserTimeData UserTime;
+    public UserStatisticsData UserStatistics;
+    public Rank_UserData UserRanking;
+
+    public PurchasedData purchasedData;
+
+    public DailyAdsCount dailyAdsCount;
+
+    public PassData passData;
+
+
+}
+
+// 장비, 캐릭터 조각 관련 저장 클래스
+[Serializable]
+public class UserItemData
+{
+    public List<ObscuredInt> EquipGetList;
+    public ObscuredInt InventorySpaceUpgradeCnt;    // 가방 확장 횟수
+    public SerializeDictionary<ObscuredString, SavedEquipmentData> EquipmentDic;    // 소유 장비
+    public SerializeDictionary<ObscuredString, SavedCharacterPieceData> CharPieceDic;   // 소유 캐릭터 조각
+}
+
+// 퀘스트 관련 저장 클래스
+[Serializable]
+public class UserQuestData
+{
+    public ObscuredInt CurGuideNum = 0;  //가이드미션 클리어횟수에 따라 퀘스트 요구량이 늘어나는 로직에 사용 ex) 영웅레벨총합, 도달 스테이지
+    public ObscuredInt CurGuideAmount = 0;
+
+    public List<SavedQuestData> DailyDataList;  // 일일 보상 리스트
+    public List<SavedQuestData> WeeklyDataList; // 주간 보상 리스트
+    public List<SavedQuestData> RepeatDataList; // 반복 보상 리스트
+    public List<SavedQuestData> GuideDataList; // 반복 보상 리스트                                              // 
+}

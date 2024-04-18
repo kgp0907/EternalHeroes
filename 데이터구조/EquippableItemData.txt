@@ -1,0 +1,160 @@
+public class EquippableItemData : ItemData
+{
+    public ObscuredString UniqueId;
+    public ObscuredInt InventoryListIndex = -1;
+    public ObscuredDouble MainOptStat;
+    public ObscuredDouble SubOptStat;
+
+    private ObscuredBool cachedCharacterIndex = false;
+    private ObscuredInt equipCharacterIndex = -1;
+    public ObscuredInt EquipCharacterIndex // index로 수정..
+    {
+        get
+        {
+            if(cachedCharacterIndex == false)
+            {
+                EquippableItemInfo info = BaseInfo as EquippableItemInfo;
+                equipCharacterIndex = UnitManager.Instance.GetCharacterEquipmentByUniqueId(info.EQUIPPABLE_POSITION, UniqueId);
+
+                cachedCharacterIndex = true;
+            }
+
+            return equipCharacterIndex; 
+        }
+        set
+        {
+            cachedCharacterIndex = false;
+        }
+    }
+
+    public ObscuredBool cachedEquipped = false;
+    public ObscuredBool isEquipped = false;
+    public ObscuredBool IsEquipped
+    {
+        get
+        {
+            if(cachedEquipped == false)
+            {
+                EquippableItemInfo info = BaseInfo as EquippableItemInfo;
+                ObscuredInt equippedIndex = UnitManager.Instance.GetCharacterEquipmentByUniqueId(info.EQUIPPABLE_POSITION, UniqueId);
+
+                isEquipped = equippedIndex > 0;
+
+                cachedEquipped = true;
+            }
+            
+            return isEquipped;
+        }
+        set
+        {
+            cachedEquipped = false;
+        }
+    }
+
+    public ObscuredBool IsLock
+    {
+        get => UserDataManager.Instance.UserItem.EquipmentDic[UniqueId].IsLock;
+    }
+
+    public ObscuredInt Star
+    {
+        get
+        {           
+            if (UserDataManager.Instance.UserItem.EquipmentDic.ContainsKey(UniqueId))
+            {
+                return UserDataManager.Instance.UserItem.EquipmentDic[UniqueId].Star;
+            }
+            else
+            {
+                return BitConvert.Enum32ToInt<RARITY>(baseInfo.ITEM_RARITY) + 1;
+            }
+        }
+    }
+
+    public ObscuredInt Level
+    {
+        get
+        {
+            if (UserDataManager.Instance.UserItem.EquipmentDic.ContainsKey(UniqueId))
+            {
+                return UserDataManager.Instance.UserItem.EquipmentDic[UniqueId].Level;
+            }
+            else
+            {
+                return 1;
+            }
+        }
+   
+    }
+
+    public ObscuredInt MaxLevelByNowStar
+    {
+        get => Star * 100;
+    }
+
+    public ObscuredInt MaxLevelByNextStar
+    {
+        get
+        {
+            if (Star < 10)
+                return (Star + 1) * 100;
+
+            return Star * 100;
+        }
+    }
+
+    public bool Compare(EquippableItemData _target)
+    {
+        return this.Equals(_target);
+    }
+
+    public void DeepCopy(int infoIndex)
+    {
+        InfoIndex = infoIndex;
+        IsSelect = false;
+
+        Type = ITEM_TYPE.EQUIPPABLE;
+        MainOptStat = 0;
+        SubOptStat = 0;
+    }
+
+    public ITEM_TYPE GetItemType()
+    {
+        return ITEM_TYPE.EQUIPPABLE;
+    }
+}
+
+
+
+public class EquippableItemInfo : ItemInfo
+{
+    public CLASS_TYPE CLASS_TYPE;
+    public EQUIPPABLE_ITEMTYPE EQUIPPABLE_ITEMTYPE;
+    public EQUIPPABLE_POSITION EQUIPPABLE_POSITION;
+    public STAT_TYPE MainOptStat;
+    public STAT_TYPE SubOptStat;
+
+    public ObscuredDouble CalcCombatPower()
+    {
+        double combatPower = 0;
+
+        return combatPower;
+    }
+
+    public ObscuredInt SetMaxLevel()
+    {
+        switch (ITEM_RARITY)
+        {
+            case RARITY.NORMAL:
+                return Const.NormalEquippableMaxLevel;
+            case RARITY.EPIC:
+                return Const.EpicEquippableMaxLevel;
+            case RARITY.UNIQUE:
+                return Const.UniqueEquippableMaxLevel;
+            case RARITY.LEGENDARY:
+                return Const.LegendaryEquippableMaxLevel;
+        }
+
+        return 0;
+    }
+}

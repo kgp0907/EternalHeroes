@@ -1,0 +1,180 @@
+public class TabManager : MonoBehaviour
+{
+
+    public bool _autoReset = true;//자동첫번째
+
+    public bool autoOpen = true;//자동열리기
+    public bool doubletabClose = false;//두번눌러 닫기
+    private int _currenttap = 0;
+
+    public int CurrentTap
+    {
+        get => _currenttap;
+    }
+
+    public GameObject[] obj;//탭
+
+    public TabItem[] tabItems;//탭버튼
+
+    public float tweenDisatnace;
+    public Sprite selectSprite;
+    public Sprite deselectSprite;
+
+    public RectTransform AnchoredObject;//플레이화면
+    public RectTransform MinSize;//플레이화면
+    public RectTransform MaxSize;//플레이화면
+
+    public Transform maginPanel;
+    public Transform FullPanel;
+
+    public UnityEvent<int> UpdateEvents;
+
+
+    public Color TextOnColor;
+    public Color TextOFFColor;
+
+    bool isFirst = false;
+
+    private void Awake()
+    {
+        isFirst = true;
+
+
+
+        if (isFirst)
+        {
+            SelectTab(0);
+            isFirst = false;
+        }
+    }
+
+    void OnEnable()
+    {
+        if (autoOpen == false)
+            return;
+        if (_autoReset)
+        {
+            SelectTab(0);
+        }
+        else
+        {
+            SelectTab(_currenttap);
+        }
+    }
+
+
+    public void SelectTab(int idx)
+    {
+        if (obj[idx] == null)
+            return;
+
+        if (!isFirst)
+        {
+            if (doubletabClose)
+            {
+                if (_currenttap == idx && obj[idx].gameObject.activeSelf)
+                {
+                    InActive(idx);
+                    _currenttap = -1;
+                    UpdateAnchoredObject();
+                    return;
+                }
+            }
+            else
+            {
+                if (_currenttap == idx) //중복클릭 방지.
+                    return;
+            }
+        }
+
+        _currenttap = idx;
+
+        for (int i = 0; i < obj.Length; i++)
+        {
+            if (idx != i)
+            {
+                InActive(i);
+            }
+        }
+        Active(idx);
+
+      
+        UpdateEvents?.Invoke(idx);
+    }
+
+    void UpdateAnchoredObject()
+    {//화면 반쪽 짜리용
+        if (CurrentTap == -1)
+        {
+            AnchoredObject.pivot = MaxSize.pivot;
+            AnchoredObject.anchoredPosition = MaxSize.anchoredPosition;
+            AnchoredObject.sizeDelta = MaxSize.sizeDelta;
+            AnchoredObject.anchorMin = MaxSize.anchorMin;
+            AnchoredObject.anchorMax = MaxSize.anchorMax;
+        }
+        else
+        {
+
+            if (obj[CurrentTap].transform.parent == maginPanel)
+            {
+                AnchoredObject.pivot = MinSize.pivot;
+                AnchoredObject.anchoredPosition = MinSize.anchoredPosition;
+                AnchoredObject.sizeDelta = MinSize.sizeDelta;
+                AnchoredObject.anchorMin = MinSize.anchorMin;
+                AnchoredObject.anchorMax = MinSize.anchorMax;
+
+            }
+            else
+            {
+                AnchoredObject.pivot = MaxSize.pivot;
+                AnchoredObject.anchoredPosition = MaxSize.anchoredPosition;
+                AnchoredObject.sizeDelta = MaxSize.sizeDelta;
+                AnchoredObject.anchorMin = MaxSize.anchorMin;
+                AnchoredObject.anchorMax = MaxSize.anchorMax;
+            }
+
+        }
+
+        
+
+    }
+
+    void Active(int idx)
+    {
+        obj[idx].gameObject.SetActive(false);
+        obj[idx].gameObject.SetActive(true);
+
+
+        if (tabItems[idx].DarkObj != null) tabItems[idx].DarkObj.SetActive(false);
+        if (tabItems[idx].SelectedMarkbj != null) tabItems[idx].SelectedMarkbj.SetActive(true);
+
+        if (tweenDisatnace > 0 && tabItems[idx].tweenTarget != null)
+        {
+            tabItems[idx].tweenTarget.DOKill();
+            tabItems[idx].tweenTarget.localPosition = Vector3.zero;
+            tabItems[idx].tweenTarget.DOAnchorPos(Vector3.up * tweenDisatnace, 0.3f).SetRelative().SetEase(Ease.OutBack);
+            tabItems[idx].tweenTarget.DOScale(Vector3.one, 0.2f).SetEase(Ease.OutBack);
+        }
+        if (deselectSprite != null) tabItems[idx].img.sprite = selectSprite;
+
+        if (tabItems[idx].buttonText != null) tabItems[idx].buttonText.color = TextOnColor;
+    }
+    void InActive(int i)
+    {
+        obj[i].gameObject.SetActive(false);
+
+        if (tabItems[i].DarkObj != null) tabItems[i].DarkObj.SetActive(true);
+        if (tabItems[i].SelectedMarkbj != null) tabItems[i].SelectedMarkbj.SetActive(false);
+
+        if (tweenDisatnace > 0 && tabItems[i].tweenTarget != null)
+        {
+            tabItems[i].tweenTarget.DOKill();
+            tabItems[i].tweenTarget.DOAnchorPos(Vector3.zero, 0.2f);
+            tabItems[i].tweenTarget.DOScale(Vector3.one, 0.2f).SetEase(Ease.OutBack);
+        }
+        if (deselectSprite != null) tabItems[i].img.sprite = deselectSprite;
+
+
+        if (tabItems[i].buttonText != null) tabItems[i].buttonText.color = TextOFFColor;
+    }
+}

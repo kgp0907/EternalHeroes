@@ -1,0 +1,141 @@
+public class UnitData
+{
+    public ObscuredDouble AtkSpdChangeValue = 0;    //버프 디버프등으로 인해 변화한  스텟 값 -GeonPyo
+    public ObscuredDouble AtkPowerChangeValue = 0;  //버프 디버프등으로 인해 변화한  스텟 값 -GeonPyo
+    public ObscuredDouble DefChangeValue = 0;       //버프 디버프등으로 인해 변화한  스텟 값 -GeonPyo
+    public ObscuredInt InfoIndex = 0;
+    public ObscuredString InfoIndexString = string.Empty;
+    //public Dictionary<EQUIPPABLE_POSITION, UnitEquipment> UnitEquippableDic;
+
+    private readonly UNIT_TYPE unitType;
+    private Dictionary<STAT_TYPE, ObscuredDouble> initStatusDic = new Dictionary<STAT_TYPE, ObscuredDouble>();  // 실제 게임에 사용 된 스텟값이 아닌 맨처음 초기화 한 스텟 값 -GeonPyo 23-12-21
+    private Dictionary<STAT_TYPE, ObscuredDouble> statusDic = new Dictionary<STAT_TYPE, ObscuredDouble>();  // 실제 게임에 사용 하는 스텟 -GeonPyo 23-12-21
+
+    private ObscuredBool cachedOwn = false;
+    private ObscuredBool isOwn = false;
+    public ObscuredBool IsOwn
+    {
+        get
+        {
+            if(cachedOwn == false)
+            {
+                isOwn = UserDataManager.Instance.UserUnit.UnitDataDic.ContainsKey(InfoIndexString);
+
+                cachedOwn = true;
+            }
+
+            return isOwn;
+        }
+        set
+        {
+            cachedOwn = false;
+        }
+    }
+
+    public ObscuredInt Star
+    {
+        get
+        {
+            if(UserDataManager.Instance.UserUnit.UnitDataDic.TryGetValue(InfoIndexString, out SavedUnitData getData) == false)
+            {
+                return BitConvert.Enum32ToInt(UnitInfo.rarity) + 1;
+            }
+
+            return getData.Star;
+        }
+    }
+
+    public ObscuredInt Level
+    {
+        get
+        {
+            if (UserDataManager.Instance.UserUnit.UnitDataDic.TryGetValue(InfoIndexString, out SavedUnitData getData) == false)
+            {
+                return 1;
+            }
+
+            return getData.Level;
+        }
+    }
+
+    public ObscuredString[] EquippedItems
+    {
+        get
+        {
+            if (UserDataManager.Instance.UserUnit.UnitDataDic.TryGetValue(InfoIndexString, out SavedUnitData getData) == false)
+            {
+                return new ObscuredString[2];
+            }
+
+            return getData.Equipments;
+        }
+    }
+
+    /// 캐릭터 돌파 횟수 -Jun 24-01-08
+    public ObscuredInt BreakthroughCnt
+    {
+        get
+        {
+            if(Level % Const.BreakthroughLevel == 0)
+            {
+                return (Level / Const.BreakthroughLevel) - 1;
+            }
+            else
+            {
+                return Level / Const.BreakthroughLevel;
+            }
+        }
+    }
+
+}
+
+
+
+
+
+
+    private UnitInfo unitInfo = null;
+    public UnitInfo UnitInfo
+    {
+        get
+        {
+            if (unitType == UNIT_TYPE.CHARACTER || unitType == UNIT_TYPE.ENEMY_CHARACTER)
+            {
+                if(unitInfo == null)
+                {
+                    if (PlanningDataRead.AllUnitInfoDict[UNIT_TYPE.CHARACTER].TryGetValue(InfoIndex, out UnitInfo getInfo) == true)
+                    {
+                        unitInfo = getInfo;
+
+                        CharacterStatInitCalc();
+                    }
+                    else
+                    {
+                        Debug.LogError($@"Character is not found : {InfoIndex}");
+                    }
+                }
+
+                return unitInfo;
+            }
+            else if (unitType == UNIT_TYPE.ENEMY)
+            {
+                if(unitInfo == null)
+                {
+                    if (PlanningDataRead.AllUnitInfoDict[UNIT_TYPE.ENEMY].TryGetValue(InfoIndex, out UnitInfo getInfo) == true)
+                    {
+                        unitInfo = getInfo;
+                    }
+                    else
+                    {
+                        Debug.LogError($@"Enemy is not found : {InfoIndex}");
+                    }
+                }
+                
+                return unitInfo;
+            }
+
+            Debug.LogError($@"잘못된 값 {InfoIndex}");
+
+            return null;
+        }
+    }

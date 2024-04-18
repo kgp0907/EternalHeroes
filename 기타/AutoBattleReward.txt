@@ -1,0 +1,76 @@
+public EventSingleAmountHandler OnUpdateDelegate = null;    // 누적 시간 진행 delegate - GeonPyo
+public EventVoidHanlder OnAccumulateRewardDelegate = null;  // 보상 누적 delegate - GeonPyo
+
+public override void OnEnable()
+{
+    if (string.IsNullOrEmpty(cachedAccumulateText) == true)
+    {
+        cachedAccumulateText = LocalizationManager.Instance.GetText("Accumulated_Time");
+        cachedMaxAccumulateText = LocalizationManager.Instance.GetText("Max_Accumulated_Time");
+    }
+
+    AutoBattleRewardManager.Instance.OnAccumulateRewardDelegate -= CheckAndReward;
+    AutoBattleRewardManager.Instance.OnAccumulateRewardDelegate += CheckAndReward;
+
+    AutoBattleRewardManager.Instance.OnUpdateDelegate -= UpdateAutoBattleProgressTimeText;
+    AutoBattleRewardManager.Instance.OnUpdateDelegate += UpdateAutoBattleProgressTimeText;
+
+    CheckAndReward();
+
+    QuestManager.Instance.UpdateObjectiveProgress(1, QUEST_OBJECTIVE.TOUCH_AUTO_REWARD);
+
+    base.OnEnable();
+
+}  
+
+ public void CheckAndReward()
+   {
+       RewardBtn.interactable = AutoBattleRewardManager.Instance.IsRewardableForAutoBattle();
+
+       if (AutoBattleRewardManager.Instance.IsRewardableForAutoBattle())
+       {
+           TextColor.SetColorString(RewardText.text, COLOR.COMMON_GRAY);
+       }
+       else
+       {
+           TextColor.SetColorString(RewardText.text, COLOR.WHITE);
+       }
+
+       TimeSpan ts = TimeSpan.FromSeconds(Const.MaxAccumulateTime);
+       TextMaxAccumulateTime.text = $@"{cachedMaxAccumulateText} {ts.Hours:D2}:{ts.Minutes:D2}:{ts.Seconds:D2}";
+
+       UpdateRewardValueTexts();
+   }
+
+   private void UpdateAutoBattleProgressTimeText(float timeInSeconds)
+   {
+       TimeSpan timeSpan = TimeSpan.FromSeconds(UserDataManager.Instance.UserReward.AutoBattleProgressTime);
+       AutoBattleProgressTimeText.text = $"{cachedAccumulateText} {timeSpan.Hours:D2}:{timeSpan.Minutes:D2}:{timeSpan.Seconds:D2}";
+   }
+
+   private void UpdateRewardValueTexts()
+   {
+       AutoBattleRewardManager abrManager = AutoBattleRewardManager.Instance;
+
+
+       GoldRewardMinuteValueText.text = $"{string.Format("{0:#,###}", abrManager.GoldRewardMinuteValue)}";
+       ExpBallRewardMinuteValueText.text = $"{string.Format("{0:#,###}", abrManager.ExpBallMinuteValue)}";
+
+       if(UserDataManager.Instance.UserReward.AccumulateGold <= 0 )
+       {
+           CurGoldStackValueText.text = "0";
+       }
+       else
+       {
+           CurGoldStackValueText.text = $"{string.Format("{0:#,###}", UserDataManager.Instance.UserReward.AccumulateGold)}";
+       }
+
+       if(UserDataManager.Instance.UserReward.AccumulateSoul <= 0)
+       {
+           CurExpBallStackValueText.text = "0";
+       }
+       else
+       {
+           CurExpBallStackValueText.text = $"{string.Format("{0:#,###}", UserDataManager.Instance.UserReward.AccumulateSoul)}";
+       }
+   }

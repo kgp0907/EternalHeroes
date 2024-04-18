@@ -1,0 +1,92 @@
+public class CurrencyManager : Singleton<CurrencyManager>
+{
+    //저장데이터
+    public Dictionary<CURRENCY_TYPE, CurrencyItemData> CurrencyDataDic { get; private set; } = new Dictionary<CURRENCY_TYPE, CurrencyItemData>();
+        
+    // 각 화폐 유형별로 획득한 금액을 추적하는 딕셔너리
+    private Dictionary<CURRENCY_TYPE, ObscuredLong> ReceivedCurrencyDic = new Dictionary<CURRENCY_TYPE, ObscuredLong>();
+    // 각 화폐 유형별로 사용한 금액을 추적하는 딕셔너리
+
+
+public void AddCurrency(CURRENCY_TYPE currencyType, ObscuredLong value)
+{
+    if (!UserDataManager.Instance.UserCurrency.CurrencyDic.ContainsKey(currencyType))
+        return;
+
+    UserDataManager.Instance.UserCurrency.CurrencyDic[currencyType] += value;
+
+    if (!UserDataManager.Instance.UserStatistics.ReceivedCurrencyDic.ContainsKey(currencyType))
+    {
+        UserDataManager.Instance.UserStatistics.ReceivedCurrencyDic.Add(currencyType, 0);
+    }
+
+    UserDataManager.Instance.UserStatistics.ReceivedCurrencyDic[currencyType] += value;
+
+    EventManager.TriggerEvent(MyEvent.CurrencyUpdate);
+
+    CurrencyInfoListUpdate?.Invoke();
+    AccountCurrencyUIUpdate?.Invoke(currencyType);
+}    
+
+public void UseCurrency(CURRENCY_TYPE currencyType, ObscuredLong amount)
+{
+    if (!UserDataManager.Instance.UserCurrency.CurrencyDic.ContainsKey(currencyType))
+        return;
+
+    if (!UserDataManager.Instance.UserStatistics.SpentCurrencyDic.ContainsKey(currencyType))
+    {
+        UserDataManager.Instance.UserStatistics.SpentCurrencyDic.Add(currencyType, 0);
+    }
+
+    if (currencyType == CURRENCY_TYPE.DIA)
+    {
+        ObscuredLong freeDiamonds = GetCurrencyCnt(CURRENCY_TYPE.DIA);
+        ObscuredLong paidDiamonds = GetCurrencyCnt(CURRENCY_TYPE.PAID_DIA);
+
+        // 유료 다이아몬드부터 소모 - doohwan
+        if(paidDiamonds >= amount)
+        {
+            UserDataManager.Instance.UserCurrency.CurrencyDic[CURRENCY_TYPE.PAID_DIA] -= amount;
+
+            UserDataManager.Instance.UserStatistics.SpentCurrencyDic[CURRENCY_TYPE.PAID_DIA] += amount;   // 추적 딕셔너리 업데이트
+        }
+        else
+        {
+            ObscuredLong neededAmount = amount - paidDiamonds;
+
+            if (freeDiamonds >= neededAmount)
+            {
+                UserDataManager.Instance.UserCurrency.CurrencyDic[CURRENCY_TYPE.PAID_DIA] = 0;
+                UserDataManager.Instance.UserStatistics.SpentCurrencyDic[CURRENCY_TYPE.PAID_DIA] += paidDiamonds;   // 추적 딕셔너리 업데이트
+
+                UserDataManager.Instance.UserCurrency.CurrencyDic[CURRENCY_TYPE.DIA] -= neededAmount;
+                UserDataManager.Instance.UserStatistics.SpentCurrencyDic[CURRENCY_TYPE.DIA] += neededAmount;    // 추적 딕셔너리 업데이트
+            }
+            else
+            {
+                // 에러 처리: 필요한 양보다 화폐가 부족함
+                Debug.LogError("Not enough currency of type: " + currencyType.ToString());
+            }
+        }
+    }
+    else
+    {
+        // 다른 화폐 유형의 경우
+        if (UserDataManager.Instance.UserCurrency.CurrencyDic[currencyType] >= amount)
+        {
+            UserDataManager.Instance.UserCurrency.CurrencyDic[currencyType] -= amount;
+
+            UserDataManager.Instance.UserStatistics.SpentCurrencyDic[currencyType] += amount;   // 추적 딕셔너리 업데이트
+        }
+        else
+        {
+            // 에러 처리: 필요한 양보다 화폐가 부족함
+            Debug.LogError("Not enough currency of type: " + currencyType.ToString());
+        }
+    }
+    EventManager.TriggerEvent(MyEvent.CurrencyUpdate);
+    
+    CurrencyInfoListUpdate?.Invoke();
+    AccountCurrencyUIUpdate?.Invoke(currencyType);
+}
+}

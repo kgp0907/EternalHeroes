@@ -1,0 +1,89 @@
+public void Init()
+{
+    GameManager.Instance.OnResetDaily -= ResetDailyQuest;
+    GameManager.Instance.OnResetDaily += ResetDailyQuest;
+
+    GameManager.Instance.OnResetWeekly -= ResetWeeklyQuest;
+    GameManager.Instance.OnResetWeekly += ResetWeeklyQuest;
+
+    QuestDataInit();
+}
+ 
+ public void ResetDailyQuest()
+ {
+     List<QuestData> dailyQuestList = GetQuestDataListByType(QUEST_TYPE.DAILY);
+     for (int i = 0; i < dailyQuestList.Count; i++)
+     {
+         dailyQuestList[i].Reset();
+     }
+
+     allQuestData[QUEST_TYPE.DAILY] = dailyQuestList;
+ }
+
+ public void ResetWeeklyQuest()
+ {
+     List<QuestData> weeklyQuestList = GetQuestDataListByType(QUEST_TYPE.WEEKLY);
+     for (int i = 0; i < weeklyQuestList.Count; i++)
+     {
+         weeklyQuestList[i].Reset();
+     }
+
+     allQuestData[QUEST_TYPE.WEEKLY] = weeklyQuestList;
+ }
+
+public QuestData GetQuestData(QUEST_TYPE questType, int index)
+ {
+     if (allQuestData.TryGetValue(questType, out List<QuestData> questList))
+     {
+         if (questList != null)
+         {
+             if (index >= 0 && index < questList.Count)
+             {
+                 return questList[index];
+             }
+         }
+     }
+     return null;
+ }
+
+ public void UpdateObjectiveProgress(ObscuredInt amount, QUEST_OBJECTIVE objective)
+ {
+     for (Dictionary<QUEST_TYPE, List<QuestData>>.Enumerator it = allQuestData.GetEnumerator(); it.MoveNext();)
+     {
+         List<QuestData> getList = it.Current.Value;
+         for (int i = 0; i < getList.Count; i++)
+         {
+             if (getList[i].QuestInfo.objective.Equals(objective) == true)
+             {
+                 if (getList[i].QuestInfo.type.Equals(QUEST_TYPE.GUIDE) == false)
+                 {
+                     getList[i].UpdateProgress(amount);
+                 }
+             }
+         }
+     }
+
+     UpdateGuideMissionProgress(objective, amount);
+     QuestAction?.Invoke();
+ }
+
+public enum QUEST_OBJECTIVE
+{
+    KILL_NORMAL_MONSTER,
+    KILL_BOSS_MONSTER,
+    WATCH_AD,
+    PLAYGAME,
+    GOLD_DUNGEON_CLEAR_CNT,
+    GOLD_DUNGEON_BESTFLOOR,
+    EXP_DUNGEON_CLEAR_CNT,
+    EXP_DUNGEON_BESTFLOOR,
+    EQUIPEXP_DUNGEON_CLEAR_CNT,
+    EQUIPEXP_DUNGEON_BESTFLOOR,
+    SOULSTONE_DUNGEON_CLEAR_CNT,
+    SOULSTONE_DUNGEON_BESTFLOOR,
+    DECOMPOSE_EQUIPITEM,
+    GACHA_CHARACTER,
+    GACHA_EQUIPITEM,
+    ALL_CHARACTERLEVEL,
+    .............
+}

@@ -1,0 +1,96 @@
+
+
+public class QuestData
+{
+    public ObscuredInt InfoIndex = 0;
+    public ObscuredInt ListIndex = -1;
+
+    private QuestInfo questInfo = null;
+    public QuestInfo QuestInfo
+    {
+        get
+        {
+            if(questInfo == null)
+            {
+                questInfo = QuestManager.Instance.GetQuestDataByInfoIndex(InfoIndex);
+            }
+
+            return questInfo;
+        }
+        set => questInfo = value;
+    }
+
+    public ObscuredInt CurrentAmount
+    {
+        get
+        {
+            if(questInfo.type == QUEST_TYPE.GUIDE)
+            {
+                return UserDataManager.Instance.UserQuest.CurGuideAmount;
+            }
+            else
+            {
+                return GetSavedQuestData().Amount;
+            }
+            
+        }
+    }
+
+    public ObscuredInt AccumulateCount
+    {
+        get
+        {
+                return Mathf.FloorToInt(GetSavedQuestData().Amount / QuestInfo.DescCount);         
+        }
+    }
+    
+    public ObscuredBool IsClear
+    {
+        get
+        {
+            if(questInfo.type == QUEST_TYPE.GUIDE)
+            {
+                if (questInfo.objective == QUEST_OBJECTIVE.BESTSTAGE)
+                {
+                    long _stage = UserDataManager.Instance.UserStage.BestStage;
+
+                    return _stage >= QuestManager.Instance.Cal_Target_Stage();
+                }
+                else
+                {
+                    return CurrentAmount >= (QuestInfo.DescCount * QuestManager.Instance.CalculateQuesRepeatCount(UserDataManager.Instance.UserQuest.CurGuideNum));
+                }
+
+            }
+            else
+            {
+                return GetSavedQuestData().IsGetReward;
+            }
+            
+        }
+    }
+
+    public void UpdateProgress(int amount)
+    {
+        if (!CanUpdateProgress())
+        {
+            return;
+        }
+
+        if (QuestInfo.type.Equals(QUEST_TYPE.DAILY) == true)
+        {
+            UserDataManager.Instance.UserQuest.DailyDataList[ListIndex].Amount += amount;
+        }
+        else if (QuestInfo.type.Equals(QUEST_TYPE.WEEKLY) == true)
+        {
+            UserDataManager.Instance.UserQuest.WeeklyDataList[ListIndex].Amount += amount;
+        }
+        else if (QuestInfo.type.Equals(QUEST_TYPE.REPEAT) == true)
+        {
+            UserDataManager.Instance.UserQuest.RepeatDataList[ListIndex].Amount += amount;
+        }
+        else if (QuestInfo.type.Equals(QUEST_TYPE.GUIDE) == true)
+        {
+            //UserDataManager.Instance.UserQuest.GuideDataList[ListIndex].Amount += amount;
+        }
+    }

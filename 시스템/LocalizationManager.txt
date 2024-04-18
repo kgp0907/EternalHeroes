@@ -1,0 +1,83 @@
+public class LocalizationManager : MonoSingleton<LocalizationManager>
+{
+    private LANGUAGE_CODE language_code = LANGUAGE_CODE.Korean; //
+    public LANGUAGE_CODE LANGUAGE_CODE
+    {
+        get => language_code;
+    }
+
+    //키 네임 , 언어 , 언어에 따른 이름 값 - GeonPyo 23-11-15
+    public Dictionary<LANGUAGE_CODE, Dictionary<string, string>> LocalNameDataDict = new Dictionary<LANGUAGE_CODE, Dictionary<string, string>>();
+   
+    private LocalizationManager() { }
+
+    public void DestroyManager()
+    {
+        Destroy(gameObject);
+    }
+
+    void Awake(){
+        LocalizationDataRead();
+
+        ObscuredInt loadLanguageIndex = ObscuredPrefs.Get("LanguageCode", -1);
+
+        if(loadLanguageIndex == -1)
+        {
+            LanguageUtility.LANGUAGE_CODE loadedCode = LanguageUtility.LoadLanguage();
+            language_code = BitConvert.StringToEnum<LANGUAGE_CODE>(loadedCode.ToString());
+        }
+        else
+        {
+            language_code = BitConvert.IntToEnum32<LANGUAGE_CODE>(loadLanguageIndex);
+        }
+
+        ObscuredPrefs.Set("LanguageCode", (ObscuredInt)BitConvert.Enum32ToInt<LANGUAGE_CODE>(language_code));
+    }
+
+    public void ChangeLanguageCode(LANGUAGE_CODE lANGUAGE_CODE)
+    {
+        if(language_code.Equals(lANGUAGE_CODE) == true)
+        {
+            return;
+        }
+
+        language_code = lANGUAGE_CODE;
+        ObscuredPrefs.Set("LanguageCode", (ObscuredInt)BitConvert.Enum32ToInt<LANGUAGE_CODE>(language_code));
+
+        Act7Utility.Instance.EnableLoadingObj(true);
+
+        UnitManager.Instance.BattleStopAllSummonUnit();
+
+        SceneManager.LoadSceneAsync("EmptyLoading");
+    }
+
+    public string GetText(string _keyName)
+    {
+        if (LocalNameDataDict[LANGUAGE_CODE].TryGetValue(_keyName, out string name))
+        {
+            if(string.IsNullOrEmpty(name) == true)
+            {
+                return LocalNameDataDict[LANGUAGE_CODE.English][_keyName];
+            }
+
+            return name;
+        }
+
+
+        Debug.LogError(@$"존재하지 않는 이름 {LANGUAGE_CODE} {_keyName}");
+
+        return _keyName;
+    }    public string GetTextFormat(string _keyName, params object[] args)
+    {
+        if (LocalNameDataDict[LANGUAGE_CODE].TryGetValue(_keyName, out string containedText) == false)
+        {
+            return _keyName;
+        }
+
+        if(string.IsNullOrEmpty(containedText) == true)
+        {
+            containedText = LocalNameDataDict[LANGUAGE_CODE.English][_keyName];
+        }
+        return string.Format(containedText, args);
+    }
+}

@@ -1,0 +1,161 @@
+    public void OnClickGaChaBtn(int gachaCnt)
+    {
+        switch (gachaCnt)
+        {
+            case 30:
+                if (CanGaCha(30))
+                {
+                    if (IsAutoSummon)
+                    {
+                        AutoSummonUiObjs.SetActive(true);
+                        ActiveToggles(false);
+                    }
+                    CloseBtn.gameObject.SetActive(false);
+                    OnClickThirtyGaChaBtn();
+                }
+                else
+                {
+                    UiController.Instance.PopupNotEnoughDiamond.gameObject.SetActive(true);
+                }
+                break;
+            case 10:
+                if (CanGaCha(10))
+                {
+                    if (IsAutoSummon)
+                    {
+                        AutoSummonUiObjs.SetActive(true);
+                        ActiveToggles(false);
+                    }
+                    CloseBtn.gameObject.SetActive(false);
+                    OnClickTenGaChaBtn();
+                }
+                else
+                {
+                    UiController.Instance.PopupNotEnoughDiamond.gameObject.SetActive(true);
+                }
+                break;
+            case 1:
+                if (CanGaCha(1))
+                {
+                    OnClickOneGaChaBtn();
+                }
+                else
+                {
+                    UiController.Instance.PopupNotEnoughDiamond.gameObject.SetActive(true);
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
+
+    public void OnClickTenGaChaBtn()
+    {
+        if (IsProcessGacha(10))
+        {
+            ActiveToggles(false);
+
+            if (IsAutoSummon)
+            {
+                curGaChaCnt = 10;
+            }
+
+            ClearList();
+            SetGaChaOpenCardCnt(10);
+            ProcessGacha(10);
+            UiController.Instance.MainUIController.CharacterGaChaController.CharacterGaCha();
+            GaChaBtnUpdate();
+        }
+        else
+        {
+            UiController.Instance.PopupNotEnoughDiamond.gameObject.SetActive(true);
+        }
+    }
+
+    private void ProcessGacha(int GaChaCount)
+    {
+        var currencyManager = CurrencyManager.Instance;
+
+        int ticketCount = (int)currencyManager.GetCurrencyCnt(CURRENCY_TYPE.HERO_GACHA_TICKET);
+
+        int useTicketCnt = 0;
+
+        int totalDiaCost = 0;// = diaCostPerDraw * drawCount;
+
+        if (ticketCount >= GaChaCount)
+        {
+            useTicketCnt = GaChaCount;
+            totalDiaCost = 0;
+        }
+        else
+        {            
+            totalDiaCost = Const.OneCharacterGaChaRequireDiaCnt * (GaChaCount);
+        }
+
+        // 다이아가 충분한지 확인
+        if (CurrencyManager.Instance.HasEnoughCurrency(CURRENCY_TYPE.DIA, totalDiaCost))
+        {
+            UiController.Instance.MainUIController.CharacterGaChaProgressUI.ActiveUI();
+            currencyManager.UseCurrency(CURRENCY_TYPE.DIA, totalDiaCost);
+            currencyManager.UseCurrency(CURRENCY_TYPE.HERO_GACHA_TICKET, useTicketCnt);
+
+            for (int i = 1; i <= GaChaCount; i++)
+            {
+                GaChaCharacter();
+            }
+         
+            GaChaManager.Instance.GaChaStackPlus(GACHATYPE.CHARACTER_ALWAYS, GaChaCount);
+
+            int curCharacterGaChaLevel = GaChaManager.Instance.GetGachaDataByType(GACHATYPE.CHARACTER_ALWAYS).CalcGetGaChaLevel();
+
+            SetUiInfo(GaChaManager.Instance.GetGachaDataByType(GACHATYPE.CHARACTER_ALWAYS));
+
+            UiController.Instance.MainUIController.CharacterGaChaProgressUI.UpdateUIState();
+
+            QuestManager.Instance.UpdateObjectiveProgress(GaChaCount, QUEST_OBJECTIVE.GACHA_CHARACTER);
+
+            UserDataManager.Instance.UserStatistics.SummonCharacterCount += GaChaCount;
+
+            if (GaChaManager.Instance.curHeroGaChaLevel < curCharacterGaChaLevel)
+            {
+                GaChaManager.Instance.curHeroGaChaLevel = curCharacterGaChaLevel;
+                UiController.Instance.OpenToastPopup(LocalizationManager.Instance.GetTextFormat("Summon_Level_Quest", curCharacterGaChaLevel));
+            }
+
+            //서버저장
+            Network.sharedInstance.SaveData();
+        }
+    }
+
+    private bool CanGaCha(int GaChaCount)
+    {
+        var currencyManager = CurrencyManager.Instance;
+
+        int ticketCount = (int)currencyManager.GetCurrencyCnt(CURRENCY_TYPE.HERO_GACHA_TICKET);
+
+        int useTicketCnt = 0;
+
+        int totalDiaCost = 0;// = diaCostPerDraw * drawCount;
+
+        // 소환티켓 개수가 가챠횟수보다 많은경우 다이아 소모는 0
+        if (ticketCount >= GaChaCount)
+        {
+            useTicketCnt = GaChaCount;
+            totalDiaCost = 0;
+        }
+        // 그렇지 않은경우 소모 다이아량은 (전체 가챠횟수 - 소환티켓갯수) * 다이아소모량
+        else
+        {
+            totalDiaCost = Const.OneCharacterGaChaRequireDiaCnt * (GaChaCount);
+        }
+                
+        if (CurrencyManager.Instance.HasEnoughCurrency(CURRENCY_TYPE.DIA, totalDiaCost))
+        {
+            return true;
+        }
+
+        UiController.Instance.PopupNotEnoughDiamond.gameObject.SetActive(true);
+        return false;
+
+    }

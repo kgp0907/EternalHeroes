@@ -1,0 +1,45 @@
+  public DateTime GetCurrentTime()
+  {
+      return Network.sharedInstance.CurrentTime;
+  }  
+
+public bool IsNextDay()
+  {
+      return UserDataManager.Instance.UserTime.NextDay <= GetCurrentTime();
+  }
+
+  public bool IsNextMonay()
+  {
+      return UserDataManager.Instance.UserTime.NextMonday <= GetCurrentTime();
+  }
+
+ if(gameDate.IsNextDay() == true)
+ {
+     ResetDailyContent();
+ }
+
+  public void ResetDailyContent()
+  {
+      UserDataManager.Instance.UserStatistics.PlayDays += 1;
+
+      OnResetDaily?.Invoke();
+
+      UserDataManager.Instance.dailyAdsCount.Reset();
+
+      gameDate.SetNextDay();
+
+      UserDataManager.Instance.ResetCurrentCountDay();
+
+      EventManager.TriggerEvent(MyEvent.ChangeDay);        
+  }
+
+  public void ResetWeeklyContent()
+  {       
+      OnResetWeekly?.Invoke();
+
+      gameDate.SetNextMonday();
+
+
+      UserDataManager.Instance.ResetCurrentCountWeek();
+      EventManager.TriggerEvent(MyEvent.ChangeWeek);        
+  }

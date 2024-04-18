@@ -1,0 +1,91 @@
+public class PopUp : MonoBehaviour
+{
+    [Header("Base")]
+    public Image CoverImage = null;
+    public Transform PopUpObj = null;
+    public ObscuredBool NotEsc = false;
+    public CanvasGroup canvasGroup;
+
+    public virtual void AllBtnActive(bool isActive)
+    {
+
+    }
+
+    public virtual void OnEnable()
+    {
+        if(CoverImage != null)
+        {
+            CoverImage.gameObject.SetActive(true);
+        }
+
+        if (canvasGroup == null)
+        {
+            if (NotEsc == false)
+            {
+                PopUpManager.Instance.PushStack(this);
+            }
+
+            return;
+        }
+
+        canvasGroup.interactable = false;
+        canvasGroup.DOKill();
+        canvasGroup.alpha = 0;
+        canvasGroup.DOFade(1, 0.35f).SetUpdate(true);
+
+        PopUpObj.DOKill();
+        PopUpObj.DOScale(0, 0).SetUpdate(true);
+
+        PopUpObj.DOScale(1, 0.35f).SetEase(Ease.OutBack).SetUpdate(true).OnComplete(() =>
+        {
+            canvasGroup.interactable = true;
+
+            if (NotEsc == false)
+            {
+                PopUpManager.Instance.PushStack(this);
+            }
+        });
+    }
+
+    public virtual void OnDisable()
+    {
+        if (NotEsc == false)
+        {
+            PopUpManager.Instance.PopStack(this);
+        }
+    }
+
+    public virtual void OnDestroy()
+    {
+        PopUpManager.Instance.PopStack(this);
+    }
+
+    public virtual void Close()
+    {
+        if (NotEsc == false)
+        {
+            PopUpManager.Instance.PopStack(this);
+        }
+
+        if (canvasGroup == null)
+        {
+            gameObject.SetActive(false);
+
+            return;
+        }
+
+        if(canvasGroup.interactable == true)
+        {
+            canvasGroup.interactable = false;
+            canvasGroup.DOKill();
+            // canvasGroup.alpha = 0;
+            canvasGroup.DOFade(0, 0.35f).SetUpdate(true);
+
+            PopUpObj.DOKill();
+            PopUpObj.DOScale(0, 0.35f).SetEase(Ease.InBack).SetUpdate(true).OnComplete(() =>
+            {
+                gameObject.SetActive(false);
+            });
+        }
+
+    }

@@ -1,0 +1,53 @@
+public class ItemData
+{
+    public ObscuredBool IsSelect = false;
+    public ITEM_TYPE Type;
+    public ObscuredInt InfoIndex = 0;
+    protected ObscuredLong Amount = 0;
+
+    protected ItemInfo baseInfo = null;
+    public virtual ItemInfo BaseInfo
+    {
+        get
+        {
+            if (baseInfo == null)
+            {
+                baseInfo = ItemManager.Instance.GetItemInfo(Type, InfoIndex);
+            }
+
+            return baseInfo;
+        }
+        set => baseInfo = value;
+    }
+
+    public virtual ObscuredLong GetAmount()
+    {
+        return Amount;
+    }
+
+    public virtual void AddAmount(ObscuredLong _amount)
+    {
+        Amount += _amount;
+    }
+
+    public virtual void SetAmount(ObscuredLong _amount)
+    {
+        Amount = _amount;
+    }
+
+    public void BaesAddAmount(ObscuredLong _amount)
+    {
+        Amount += _amount;
+    }
+}
+
+
+public class ItemInfo
+{
+    public ITEM_TYPE ITEM_TYPE;
+    public RARITY ITEM_RARITY;
+    public ObscuredString Name;
+    public ObscuredString Desc;
+    public ObscuredInt Index;
+    public Sprite IconSprite;
+}
